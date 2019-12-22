@@ -1,6 +1,6 @@
 package main
 
-import "./cmd"
+import "github.com/kohbis/dimg/cmd"
 
 func main() {
 	cmd.Execute()

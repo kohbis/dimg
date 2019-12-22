@@ -22,32 +22,28 @@ type Tags struct {
 	Count    int         `json:"count"`
 	Next     string      `json:"next"`
 	Previous interface{} `json:"previous"`
-	Results  []Result    `json:"results"`
-}
-
-type Result struct {
-	Name                string      `json:"name"`
-	FullSize            int64       `json:"full_size"`
-	Images              []Image     `json:"images"`
-	ID                  int         `json:"id"`
-	Repository          int         `json:"repository"`
-	Creator             int         `json:"creator"`
-	LastUpdater         int         `json:"last_updater"`
-	LastUpdaterUsername string      `json:"last_updater_username"`
-	ImageID             interface{} `json:"image_id"`
-	V2                  bool        `json:"v2"`
-	LastUpdated         time.Time   `json:"last_updated"`
-}
-
-type Image struct {
-	Size         int64       `json:"size"`
-	Digest       string      `json:"digest"`
-	Architecture string      `json:"architecture"`
-	Os           string      `json:"os"`
-	OsVersion    string      `json:"os_version"`
-	OsFeatures   string      `json:"os_features"`
-	Variant      interface{} `json:"variant"`
-	Features     string      `json:"features"`
+	Results  []struct {
+		Name     string `json:"name"`
+		FullSize int    `json:"full_size"`
+		Images   []struct {
+			Size         int         `json:"size"`
+			Digest       string      `json:"digest"`
+			Architecture string      `json:"architecture"`
+			Os           string      `json:"os"`
+			OsVersion    interface{} `json:"os_version"`
+			OsFeatures   string      `json:"os_features"`
+			Variant      interface{} `json:"variant"`
+			Features     string      `json:"features"`
+		} `json:"images"`
+		ID                  int         `json:"id"`
+		Repository          int         `json:"repository"`
+		Creator             int         `json:"creator"`
+		LastUpdater         int         `json:"last_updater"`
+		LastUpdaterUsername string      `json:"last_updater_username"`
+		ImageID             interface{} `json:"image_id"`
+		V2                  bool        `json:"v2"`
+		LastUpdated         time.Time   `json:"last_updated"`
+	} `json:"results"`
 }
 
 var rootCmd = &cobra.Command{
@@ -75,34 +71,28 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("Search %q tags\n", imageName)
+		fmt.Printf("Searching %q tags...\n", imageName)
 
-		url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/library/%s/tags/", imageName)
+		url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/library/%s/tags/?page_size=10000", imageName)
+
+		resp, _ := http.Get(url)
+		defer resp.Body.Close()
+
+		bytes, _ := ioutil.ReadAll(resp.Body)
+		jsonBytes := ([]byte)(bytes)
+
+		tags := new(Tags)
+		if err := json.Unmarshal(jsonBytes, tags); err != nil {
+			fmt.Println("JSON Unmarshal error:", err)
+			return
+		}
+
+		fmt.Printf("%q has \x1b[32m%d\x1b[0m tags.\n", imageName, tags.Count)
 
 		// tag list
 		var tagNames []string
-
-		for url != "" {
-			fmt.Printf(".")
-
-			resp, _ := http.Get(url)
-			defer resp.Body.Close()
-
-			bytes, _ := ioutil.ReadAll(resp.Body)
-			jsonBytes := ([]byte)(bytes)
-
-			tags := new(Tags)
-			if err := json.Unmarshal(jsonBytes, tags); err != nil {
-				fmt.Println("JSON Unmarshal error:", err)
-				return
-			}
-
-			for _, res := range tags.Results {
-				tagNames = append(tagNames, res.Name)
-			}
-
-			// next page
-			url = tags.Next
+		for _, res := range tags.Results {
+			tagNames = append(tagNames, res.Name)
 		}
 
 		// select tag

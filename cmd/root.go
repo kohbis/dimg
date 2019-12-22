@@ -48,7 +48,7 @@ type Tags struct {
 
 var rootCmd = &cobra.Command{
 	Use:   "dimg",
-	Short: "docker imags command suppoter",
+	Short: "docker pull image suppoter",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		validate := func(input string) error {

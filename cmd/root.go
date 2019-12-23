@@ -97,6 +97,7 @@ var rootCmd = &cobra.Command{
 
 		// select tag
 		if len(tagNames) > 0 {
+
 			searcher := func(input string, index int) bool {
 				tagNames := tagNames[index]
 				name := strings.Replace(strings.ToLower(tagNames), " ", "", -1)
@@ -108,6 +109,7 @@ var rootCmd = &cobra.Command{
 			selectTag := promptui.Select{
 				Label:    "Select Tag",
 				Items:    tagNames,
+				Size:     10,
 				Searcher: searcher,
 			}
 

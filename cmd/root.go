@@ -18,6 +18,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Tags represents the Response of the API that gets Docker tags
 type Tags struct {
 	Count    int         `json:"count"`
 	Next     string      `json:"next"`
@@ -75,7 +76,11 @@ var rootCmd = &cobra.Command{
 
 		url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/library/%s/tags/?page_size=10000", imageName)
 
-		resp, _ := http.Get(url)
+		resp, err := http.Get(url)
+		if err != nil {
+			fmt.Println("Failed to Get Request:", err)
+			return
+		}
 		defer resp.Body.Close()
 
 		bytes, _ := ioutil.ReadAll(resp.Body)
@@ -141,6 +146,9 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+/*
+Execute executes the CLI root command
+*/
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

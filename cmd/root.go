@@ -95,8 +95,6 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("%q has \x1b[32m%d\x1b[0m tags.\n", imageName, tags.Count)
-
 		// tag list
 		var tagNames []string
 		for _, res := range tags.Results {
@@ -105,6 +103,8 @@ var rootCmd = &cobra.Command{
 
 		// select tag
 		if len(tagNames) > 0 {
+
+			fmt.Printf("%q has \x1b[32m%d\x1b[0m tags.\n", imageName, tags.Count)
 
 			searcher := func(input string, index int) bool {
 				tagNames := tagNames[index]

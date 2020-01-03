@@ -52,9 +52,13 @@ var rootCmd = &cobra.Command{
 	Short: "docker pull image suppoter",
 
 	Run: func(cmd *cobra.Command, args []string) {
+
 		validate := func(input string) error {
 			if len(input) < 1 {
 				return errors.New("Please input Image Name")
+			}
+			if strings.Contains(input, " ") {
+				return errors.New("Input must not has spaces")
 			}
 			return nil
 		}
@@ -66,7 +70,6 @@ var rootCmd = &cobra.Command{
 		}
 
 		imageName, err := typeImage.Run()
-
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return

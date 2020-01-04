@@ -47,6 +47,11 @@ type Tags struct {
 	} `json:"results"`
 }
 
+var faintText = promptui.Styler(promptui.FGFaint)
+var boldText = promptui.Styler(promptui.FGBold)
+var greenText = promptui.Styler(promptui.FGGreen)
+var redText = promptui.Styler(promptui.FGRed)
+
 var rootCmd = &cobra.Command{
 	Use:   "dimg",
 	Short: "docker pull image suppoter",
@@ -75,7 +80,7 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("Searching %q tags...\n", imageName)
+		fmt.Printf("Searching %s tags...\n", boldText(imageName))
 
 		url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/library/%s/tags/?page_size=10000", imageName)
 
@@ -104,7 +109,7 @@ var rootCmd = &cobra.Command{
 		// select tag
 		if len(tagNames) > 0 {
 
-			fmt.Printf("%q has \x1b[32m%d\x1b[0m tags.\n", imageName, tags.Count)
+			fmt.Printf("%s has %s tags.\n", boldText(imageName), greenText(tags.Count))
 
 			searcher := func(input string, index int) bool {
 				tagNames := tagNames[index]
@@ -117,8 +122,8 @@ var rootCmd = &cobra.Command{
 			selectTag := promptui.Select{
 				Label:    "Select Tag",
 				Items:    tagNames,
-				Size:     10,
 				Searcher: searcher,
+				Size:     10,
 			}
 
 			_, tagName, err := selectTag.Run()
@@ -127,26 +132,49 @@ var rootCmd = &cobra.Command{
 				return
 			}
 
-			fmt.Printf("You select %q\n", tagName)
+			image := fmt.Sprintf("%s:%s", imageName, tagName)
+
+			confirmLabel := fmt.Sprintf("Start pulling %s", image)
+			isConfirm, err := confirm(confirmLabel)
+			if !isConfirm {
+				if err != nil {
+					fmt.Printf("%v\n", err)
+				}
+				return
+			}
 
 			ctx := context.Background()
 			cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 			if err != nil {
-				panic(err)
+				fmt.Printf("CreateClient failed %v\n", err)
+				return
 			}
-
-			image := fmt.Sprintf("%s:%s", imageName, tagName)
-			fmt.Printf("\x1b[32mDocker pull %s\x1b[0m\n", image)
 
 			out, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
 			if err != nil {
-				panic(err)
+				fmt.Printf("ImagePull failed %v\n", err)
+				return
 			}
 			io.Copy(os.Stdout, out)
 		} else {
 			fmt.Printf("%q has no tags.\n", imageName)
 		}
 	},
+}
+
+func confirm(label string) (bool, error) {
+
+	prompt := promptui.Prompt{
+		Label:     label,
+		Default:   "y",
+		IsConfirm: true,
+	}
+	_, err := prompt.Run()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 /*

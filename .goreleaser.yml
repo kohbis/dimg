@@ -17,3 +17,17 @@ checksum:
 
 release:
   prerelease: auto
+
+brews:
+  - name: dimg
+    description: "TUI for docker pull"
+    github:
+      owner: kohbis
+      name: homebrew-dimg
+    folder: Formula
+    homepage: "https://github.com/kohbis/dimg"
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@carlosbecker.com
+    install: |
+      bin.install "dimg"

@@ -1,0 +1,26 @@
+project_name: dimg
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: .
+    ldflags:
+      - -s -w
+
+archive:
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    amd64: x86_64
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+
+checksum:
+  name_template: 'checksums.txt'
+
+release:
+  prerelease: auto

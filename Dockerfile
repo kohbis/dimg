@@ -1,14 +1,12 @@
-FROM golang:1.13-alpine
+FROM golang:1.14.2-alpine as builder
+ENV CGO_ENABLED 0
+ENV GOOS linux
+ENV GOARCH amd64
+ENV GO111MODULE on
+WORKDIR /go/src/github.com/kohbis/dimg/
+COPY . .
+RUN go build
 
-ENV LANG "C.UTF-8"
-ENV APP_ROOT /go
-
-WORKDIR $APP_ROOT
-COPY . $APP_ROOT
-
-RUN apk update \
-    && apk add --update git \
-    && rm -rf /var/cache/apk/*
-
-# go library
-RUN go get -u github.com/spf13/cobra/cobra
+FROM alpine:3.11
+COPY --from=builder /go/src/github.com/kohbis/dimg/dimg /usr/local/bin/dimg
+ENTRYPOINT ["dimg"]

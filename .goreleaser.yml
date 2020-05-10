@@ -5,9 +5,9 @@ before:
     - go mod tidy
 
 builds:
-  - main: .
-    ldflags:
-      - -s -w
+  - env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
 
 archive:
   replacements:
@@ -15,9 +15,6 @@ archive:
     linux: Linux
     windows: Windows
     amd64: x86_64
-    env:
-      - CGO_ENABLED=0
-      - GO111MODULE=on
 
 checksum:
   name_template: 'checksums.txt'

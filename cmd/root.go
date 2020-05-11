@@ -103,7 +103,7 @@ func NewCmdRoot() *cobra.Command {
 					return
 				}
 
-				if commandExists("docke") {
+				if commandExists("docker") {
 
 					pull := exec.Command("docker", "pull", image)
 					pull.Stdout = os.Stdout

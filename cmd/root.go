@@ -57,7 +57,7 @@ func NewCmdRoot() *cobra.Command {
 
 			cmd.Printf("Searching %s tags...\n", boldText(imageName))
 
-			url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/library/%s/tags/?page_size=10000", imageName)
+			url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/%s/tags/?page_size=10000", imageName)
 
 			resp, err := http.Get(url)
 			if err != nil {
@@ -172,6 +172,10 @@ func imagePrompt() (string, error) {
 	imageName, err := typeImage.Run()
 	if err != nil {
 		return "", err
+	}
+
+	if !strings.Contains(imageName, "/") {
+		imageName = "library/" + imageName
 	}
 
 	return imageName, nil

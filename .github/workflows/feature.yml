@@ -21,4 +21,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Test
-        run: go test -v ./cmd
+        run: go test -v ./...

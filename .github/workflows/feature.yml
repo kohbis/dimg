@@ -1,4 +1,4 @@
-name: release
+name: feature
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - 'feature/**'
 
 jobs:
-  goreleaser:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -15,5 +15,10 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: 1.15
-      - name: Test code
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
         run: go test -v ./cmd

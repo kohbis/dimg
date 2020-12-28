@@ -6,7 +6,7 @@ on:
     - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
-  setup:
+  goreleaser:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,11 +17,6 @@ jobs:
           go-version: 1.15
       - name: Test
         run: go test -v ./...
-
-  goreleaser:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1
         with:

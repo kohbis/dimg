@@ -46,7 +46,7 @@ var redText = promptui.Styler(promptui.FGRed)
 func NewCmdRoot() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dimg",
-		Short: "docker pull image suppoter",
+		Short: "docker pull image supporter",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			imageName, err := imagePrompt()

@@ -158,7 +158,7 @@ func imagePrompt() (string, error) {
 			return errors.New("Please input Image Name")
 		}
 		if strings.Contains(input, " ") {
-			return errors.New("Imaage Name must not has spaces")
+			return errors.New("Image Name must not has spaces")
 		}
 		return nil
 	}

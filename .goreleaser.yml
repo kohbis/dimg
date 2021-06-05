@@ -21,7 +21,7 @@ release:
 brews:
   - name: dimg
     description: "TUI for docker pull"
-    github:
+    tap:
       owner: kohbis
       name: homebrew-dimg
     folder: Formula

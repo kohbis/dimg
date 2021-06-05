@@ -19,11 +19,9 @@ import (
 )
 
 // Tags represents response of the API that gets Docker tags
-type Tags struct {
-	Count   int `json:"count"`
-	Results []struct {
-		Name string `json:"name"`
-	} `json:"results"`
+type Tags []struct {
+	// Layer string `json:"layer"`
+	Name string `json:"name"`
 }
 
 // Status represents status in pulling image
@@ -57,34 +55,16 @@ func NewCmdRoot() *cobra.Command {
 
 			cmd.Printf("Searching %s tags...\n", boldText(imageName))
 
-			url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/%s/tags/?page_size=10000", imageName)
-
-			resp, err := http.Get(url)
+			tagNames, err := getTags(imageName)
 			if err != nil {
-				cmd.Println("Failed to Get Request: ", err.Error())
+				cmd.Println(err.Error())
 				return
-			}
-			defer resp.Body.Close()
-
-			bytes, _ := ioutil.ReadAll(resp.Body)
-			jsonBytes := ([]byte)(bytes)
-
-			tags := new(Tags)
-			if err := json.Unmarshal(jsonBytes, tags); err != nil {
-				cmd.Println("JSON Unmarshal error: ", err.Error())
-				return
-			}
-
-			// tag list
-			var tagNames []string
-			for _, res := range tags.Results {
-				tagNames = append(tagNames, res.Name)
 			}
 
 			// select tag
 			if len(tagNames) > 0 {
 
-				cmd.Printf("%s has %s tags.\n", boldText(imageName), greenText(tags.Count))
+				cmd.Printf("%s has %s tags.\n", boldText(imageName), greenText(len(tagNames)))
 
 				tagName, err := tagSelect(tagNames)
 				if err != nil {
@@ -179,6 +159,31 @@ func imagePrompt() (string, error) {
 	}
 
 	return imageName, nil
+}
+
+func getTags(imageName string) ([]string, error) {
+	url := fmt.Sprintf("https://registry.hub.docker.com/v1/repositories/%s/tags", imageName)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+	jsonBytes := ([]byte)(bytes)
+
+	tags := new(Tags)
+	if err := json.Unmarshal(jsonBytes, tags); err != nil {
+		return nil, err
+	}
+
+	var tagNames []string
+	for _, tag := range *tags {
+		tagNames = append(tagNames, tag.Name)
+	}
+
+	return tagNames, nil
 }
 
 func tagSelect(tagNames []string) (string, error) {

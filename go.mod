@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/manifoldco/promptui v0.9.0
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.0
 )
 
 require (

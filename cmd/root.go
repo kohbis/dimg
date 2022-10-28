@@ -19,9 +19,10 @@ import (
 )
 
 // Tags represents response of the API that gets Docker tags
-type Tags []struct {
-	// Layer string `json:"layer"`
-	Name string `json:"name"`
+type Tags struct {
+	Results []struct {
+		Name string `json:"name"`
+	}
 }
 
 // Status represents status in pulling image
@@ -162,7 +163,7 @@ func imagePrompt() (string, error) {
 }
 
 func getTags(imageName string) ([]string, error) {
-	url := fmt.Sprintf("https://registry.hub.docker.com/v1/repositories/%s/tags", imageName)
+	url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/%s/tags", imageName)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -179,8 +180,8 @@ func getTags(imageName string) ([]string, error) {
 	}
 
 	var tagNames []string
-	for _, tag := range *tags {
-		tagNames = append(tagNames, tag.Name)
+	for _, res := range tags.Results {
+		tagNames = append(tagNames, res.Name)
 	}
 
 	return tagNames, nil

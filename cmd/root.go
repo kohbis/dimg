@@ -156,7 +156,9 @@ func getTags(cmd *cobra.Command, imageName string) ([]string, error) {
 		}
 
 		url = tags.Next
-		fmt.Printf("[%v/%v]\n", len(tagNames), tags.Count)
+		if len(tagNames)%500 < 100 {
+			cmd.Printf("loaded %v out of %v tags\n", len(tagNames), tags.Count)
+		}
 	}
 
 	return tagNames, nil

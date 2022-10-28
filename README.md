@@ -24,6 +24,10 @@ If You want specify repogitory, input Image Name like `${repo_name}/${image_name
 
 ![console](doc/image/console_repo_specified.png)
 
+## Dependencies
+
+- [docker/cli](https://github.com/docker/cli) must be installed.
+
 ## Appendix
 
 [Docker Advent Calendar 2019 22日目](https://qiita.com/kohbis/items/684b546d9e75e8b2b80b)

@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"bufio"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,14 +10,20 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
+const (
+	// List repository tags path paramters
+	// ref: https://docs.docer.com/docker-hub/api/latest/#tag/repositories
+	max_page_size = 100
+)
+
 // Tags represents response of the API that gets Docker tags
 type Tags struct {
+	Count   int    `json:"count"`
+	Next    string `json:"next"`
 	Results []struct {
 		Name string `json:"name"`
 	}
@@ -54,9 +58,7 @@ func NewCmdRoot() *cobra.Command {
 				return
 			}
 
-			cmd.Printf("Searching %s tags...\n", boldText(imageName))
-
-			tagNames, err := getTags(imageName)
+			tagNames, err := getTags(cmd, imageName)
 			if err != nil {
 				cmd.Println(err.Error())
 				return
@@ -84,45 +86,12 @@ func NewCmdRoot() *cobra.Command {
 					return
 				}
 
-				if commandExists("docker") {
-
-					pull := exec.Command("docker", "pull", image)
-					pull.Stdout = os.Stdout
-					pull.Stderr = os.Stderr
-					if err := pull.Run(); err != nil {
-						cmd.Println(err.Error())
-						return
-					}
-
-				} else {
-					ctx := context.Background()
-					cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-					if err != nil {
-						cmd.Println(err.Error())
-						return
-					}
-
-					out, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
-					defer out.Close()
-					if err != nil {
-						cmd.Println(err.Error())
-						return
-					}
-
-					scanner := bufio.NewScanner(out)
-					for scanner.Scan() {
-						line := scanner.Bytes()
-						status := new(Status)
-						if err := json.Unmarshal(line, status); err != nil {
-							cmd.Println("JSON Unmarshal error: ", err.Error())
-							return
-						}
-						cmd.Printf("%s: %s %s\n", status.ID, status.Status, status.Progress)
-					}
-					if scanner.Err() != nil {
-						cmd.Println(err.Error())
-						return
-					}
+				pull := exec.Command("docker", "pull", image)
+				pull.Stdout = os.Stdout
+				pull.Stderr = os.Stderr
+				if err := pull.Run(); err != nil {
+					cmd.Println(err.Error())
+					return
 				}
 			} else {
 				cmd.Printf("%q not found or no tags.\n", imageName)
@@ -162,26 +131,32 @@ func imagePrompt() (string, error) {
 	return imageName, nil
 }
 
-func getTags(imageName string) ([]string, error) {
-	url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/%s/tags", imageName)
+func getTags(cmd *cobra.Command, imageName string) ([]string, error) {
+	cmd.Printf("Searching %s tags...\n", boldText(imageName))
 
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	bytes, _ := ioutil.ReadAll(resp.Body)
-	jsonBytes := ([]byte)(bytes)
-
-	tags := new(Tags)
-	if err := json.Unmarshal(jsonBytes, tags); err != nil {
-		return nil, err
-	}
-
+	url := fmt.Sprintf("https://registry.hub.docker.com/v2/repositories/%s/tags?page=1&page_size=%v", imageName, max_page_size)
 	var tagNames []string
-	for _, res := range tags.Results {
-		tagNames = append(tagNames, res.Name)
+	for url != "" {
+		resp, err := http.Get(url)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		bytes, _ := ioutil.ReadAll(resp.Body)
+		jsonBytes := ([]byte)(bytes)
+
+		tags := new(Tags)
+		if err := json.Unmarshal(jsonBytes, tags); err != nil {
+			return nil, err
+		}
+
+		for _, res := range tags.Results {
+			tagNames = append(tagNames, res.Name)
+		}
+
+		url = tags.Next
+		fmt.Printf("[%v/%v]\n", len(tagNames), tags.Count)
 	}
 
 	return tagNames, nil
@@ -237,6 +212,12 @@ Execute executes the CLI root command
 */
 func Execute() {
 	cmd := NewCmdRoot()
+
+	if !commandExists("docker") {
+		cmd.Println("'docker' command not found")
+		os.Exit(1)
+	}
+
 	cmd.SetOutput(os.Stdout)
 	if err := cmd.Execute(); err != nil {
 		cmd.SetOutput(os.Stderr)
@@ -246,5 +227,4 @@ func Execute() {
 	os.Exit(0)
 }
 
-func init() {
-}
+func init() {}
